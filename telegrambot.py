@@ -921,15 +921,19 @@ def func_set_new_user(message):
     bot.register_next_step_handler(message, user_func_set_new_user)
 
 def user_func_set_new_user(message):
-    try:
-        adminusers_insert_dct['user_id'] = int(message.text)
-    except Exception as e:
-        logger.error(e)
+    pattern = r'^\d+$'
+    if re.match(pattern, message.text):
+        try:
+            adminusers_insert_dct['user_id'] = int(message.text)
+        except Exception as e:
+            logger.error(e)
+            bot.send_message(message.chat.id, '<b>Ошибка при обработке текста❌</b>', parse_mode='HTML')
+            return
+        bot.send_message(message.chat.id, '<b>Отлично! Теперь введите username пользователя☺</b>', parse_mode='HTML')
+        bot.register_next_step_handler(message, username_func_set_new_user)
+    else:
         bot.send_message(message.chat.id, '<b>Ошибка при обработке текста❌</b>', parse_mode='HTML')
         return
-    bot.send_message(message.chat.id, '<b>Отлично! Теперь введите username пользователя☺</b>', parse_mode='HTML')
-    bot.register_next_step_handler(message, username_func_set_new_user)
-
 def username_func_set_new_user(message):
     try:
         adminusers_insert_dct['username'] = message.text
@@ -941,26 +945,31 @@ def username_func_set_new_user(message):
     bot.register_next_step_handler(message, class_func_set_new_user)
 
 def class_func_set_new_user(message):
-    mas_class = message.text.split(' ')
-    adminusers_insert_dct['class_number'] = mas_class[0] 
-    adminusers_insert_dct['class_letter'] = mas_class[1]
-    try:
-        password = 'student'
-        user_id = adminusers_insert_dct['user_id']
-        username = adminusers_insert_dct['username']
-        class_number = adminusers_insert_dct['class_number']
-        class_letter = adminusers_insert_dct['class_letter']
-        with db_lock:
-            cur.execute("INSERT INTO users (user_id, username, password, class_number, class_letter) VALUES (?, ?, ?, ?, ?)", 
-                    (user_id, username, password, class_number, class_letter))
-            conn.commit()
-    except Exception as e:
-        logger.error(e)
-        bot.send_message(message.chat.id, '<b>Не удалось добавить пользователя в базу данных❌</b>', parse_mode='HTML')
-    user_info_cort =(user_id, username, password, class_number, class_letter)
-    bot.send_message(message.chat.id, '<b>Вы успешно добавили нового пользователя❤</b>', parse_mode='HTML')
-    logger.info(f"Пользователь зарегистрирован: {user_info_cort}")
-    bot.send_message(user_id, '<b>Добро пожаловать в SchoolBot😉\nИспользуйте команду /help, чтобы узнать ваши возможнсти</b>', parse_mode='HTML')
+    pattern = r'^([5-9]|10|11) [АБВГД]$'
+    if re.match(pattern, message.text):
+        mas_class = message.text.split(' ')
+        adminusers_insert_dct['class_number'] = mas_class[0] 
+        adminusers_insert_dct['class_letter'] = mas_class[1]
+        try:
+            password = 'student'
+            user_id = adminusers_insert_dct['user_id']
+            username = adminusers_insert_dct['username']
+            class_number = adminusers_insert_dct['class_number']
+            class_letter = adminusers_insert_dct['class_letter']
+            with db_lock:
+                cur.execute("INSERT INTO users (user_id, username, password, class_number, class_letter) VALUES (?, ?, ?, ?, ?)", 
+                        (user_id, username, password, class_number, class_letter))
+                conn.commit()
+        except Exception as e:
+            logger.error(e)
+            bot.send_message(message.chat.id, '<b>Не удалось добавить пользователя в базу данных❌</b>', parse_mode='HTML')
+        user_info_cort =(user_id, username, password, class_number, class_letter)
+        bot.send_message(message.chat.id, '<b>Вы успешно добавили нового пользователя❤</b>', parse_mode='HTML')
+        logger.info(f"Пользователь зарегистрирован: {user_info_cort}")
+        bot.send_message(user_id, '<b>Добро пожаловать в SchoolBot😉\nИспользуйте команду /help, чтобы узнать ваши возможнсти</b>', parse_mode='HTML')
+    else:
+        bot.send_message(message.chat.id, '<b>Ошибка при обработке текста❌</b>', parse_mode='HTML')
+        return
 
 def notify_all_users(message_text):
     stiker_id = "CAACAgIAAxkBAAEN0n9n5D7j7cx0oCTQgnooixX3UtWHXAACIQ0AAiWx6UpCBrcao52KeDYE"
